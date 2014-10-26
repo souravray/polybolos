@@ -1,0 +1,19 @@
+[  
+   {  
+      "mode":"any | dev | prod",
+      "name":"QueryName",
+      "workers":[  
+      	{
+      		"hosts": ["http(s)://url-root", "...."], // hosts are optional if not mentioned pplybolos assumes it to be 127.0.0.1
+      		"shorthand-prefix": "",
+      		"endpoints": [
+      			{
+      				"uri": "endpoint-uri/1/", "short-hand" "shot-name"
+      			} //, multiple end points
+      		]
+      	} //, multiple worker groups
+      ],
+      "max-concurrency": 45, // bucket size
+      "max-dequeue-rate": 20, // must be max-dequeue-rate <=  max-concurrency
+   } //, multiple queues with distinct name and mode combinations
+]
