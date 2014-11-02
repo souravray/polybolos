@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-10-29 02:02:27
+* @Last Modified time: 2014-11-02 17:25:21
  */
 
 package polybolos
@@ -12,6 +12,7 @@ import (
 	q "github.com/souravray/polybolos/queue"
 	"math"
 	"net/url"
+	"time"
 )
 
 type QueueType int
@@ -76,8 +77,8 @@ func (q *Queue) Start() {
 					if item.Path != "" {
 						fmt.Println(item)
 					}
-					q.bucket.Spend()
 				}
+				q.bucket.Spend()
 			}
 		}
 	}
@@ -92,7 +93,7 @@ func (q *Queue) Delete() bool {
 	return false
 }
 
-func NewTask(path string, payload url.Values, delay string) (task *q.Task) {
-	task, _ = q.NewTask(path, payload, delay)
+func NewTask(path string, payload url.Values, delay string, eta time.Time) (task *q.Task) {
+	task, _ = q.NewTask(path, payload, delay, eta)
 	return task
 }

@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:51:37
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-10-27 00:10:04
+* @Last Modified time: 2014-11-02 20:58:36
  */
 
 package queue
@@ -45,19 +45,21 @@ func (task *Task) priority() int32 {
 	return int32(now - eta)
 }
 
-func NewTask(path string, payload url.Values, delay string) (task *Task, err error) {
+func NewTask(path string, payload url.Values, delay string, eta time.Time) (task *Task, err error) {
 	task = new(Task)
 	task.enqueTS = time.Now().Unix()
 	task.Path = path
 	task.Payload = payload
-	if delay == "" {
-		task.ETA = time.Now()
-	} else {
+	if !eta.IsZero() {
+		task.ETA = eta
+	} else if delay != "" {
 		task.MinDelay, err = time.ParseDuration(delay)
 		if err != nil {
 			return
 		}
 		task.ETA = time.Now().Add(task.MinDelay)
+	} else {
+		task.ETA = time.Now()
 	}
 	return
 }

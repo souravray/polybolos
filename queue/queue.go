@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 17:40:14
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-10-26 21:37:09
+* @Last Modified time: 2014-10-30 23:40:07
  */
 package queue
 
@@ -13,4 +13,5 @@ type Queue interface {
 	Len() int
 	PushTask(task *Task)
 	PopTask() *Task
+	DeleteTask(task *Task)
 }

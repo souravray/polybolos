@@ -2,14 +2,14 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:52:28
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-10-26 23:42:12
+* @Last Modified time: 2014-11-02 20:57:48
  */
 
 package queue
 
 import (
-	"container/heap"
 	"fmt"
+	"github.com/souravray/polybolos/queue/heap"
 )
 
 type JournalingInmemoryQueue struct {
@@ -17,7 +17,7 @@ type JournalingInmemoryQueue struct {
 }
 
 func NewJournalingInimemoryQueue() Queue {
-	tq := JournalingInmemoryQueue{InmemoryQueue{make(PriorityQueue, 0),
+	tq := JournalingInmemoryQueue{InmemoryQueue{make(PriorityWaitQueue, 0),
 		make(map[string]*Task, 0),
 		make(map[string]*Task, 0)}}
 	heap.Init(&tq)
@@ -35,4 +35,9 @@ func (tq *JournalingInmemoryQueue) PopTask() *Task {
 		fmt.Println("Journaling Pop - ", task.Path)
 	}
 	return task
+}
+
+func (tq *JournalingInmemoryQueue) DeleteTask(task *Task) {
+	tq.InmemoryQueue.DeleteTask(task)
+	fmt.Println("Journaling Delete - ", task.Path)
 }
