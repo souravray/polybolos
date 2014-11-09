@@ -1,8 +1,9 @@
 /*
+* Πολυβολος
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-02 17:25:21
+* @Last Modified time: 2014-11-08 22:57:10
  */
 
 package polybolos
@@ -22,12 +23,16 @@ const (
 	INMEMORY_JOURNALING
 )
 
+type WorkerResource struct {
+	Worker
+}
+
 type Queue struct {
 	q.Queue
 	queType   QueueType
 	bucket    *Bucket
 	queueRate int32
-	workers   map[string]*Worker
+	workers   map[string]*WorkerResource
 	stop      chan bool
 }
 
@@ -39,7 +44,7 @@ func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) 
 		if err != nil {
 			return nil, err
 		}
-		queueRate := int32(math.Ceil(float64(maxDequeueRate / 2)))
+		queueRate := int32(math.Ceil(float64(maxDequeueRate)))
 		switch qtype {
 		case INMEMORY:
 			queue = &Queue{
@@ -47,7 +52,7 @@ func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) 
 				qtype,
 				bucket,
 				queueRate,
-				make(map[string]*Worker),
+				make(map[string]*WorkerResource),
 				make(chan bool)}
 		case INMEMORY_JOURNALING:
 			queue = &Queue{
@@ -55,7 +60,7 @@ func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) 
 				qtype,
 				bucket,
 				queueRate,
-				make(map[string]*Worker),
+				make(map[string]*WorkerResource),
 				make(chan bool)}
 		}
 	}
@@ -76,6 +81,8 @@ func (q *Queue) Start() {
 					item := q.PopTask()
 					if item.Path != "" {
 						fmt.Println(item)
+						worker, _ := q.workers[item.Path]
+						worker.Worker.Perform(item.Payload)
 					}
 				}
 				q.bucket.Spend()
@@ -91,6 +98,19 @@ func (q *Queue) Delete() bool {
 		return true
 	}
 	return false
+}
+
+func (q *Queue) AddHTTPWorker(name string, url url.URL, method HTTPWorkerMethod, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
+	worker := &HTTPWorker{WorkerConfig{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
+		url,
+		method}
+	q.workers[name] = &WorkerResource{worker}
+}
+
+func (q *Queue) AddLocalWorker(name string, instance Worker, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
+	worker := &LocalWorker{WorkerConfig{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
+		instance}
+	q.workers[name] = &WorkerResource{worker}
 }
 
 func NewTask(path string, payload url.Values, delay string, eta time.Time) (task *q.Task) {
