@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:52:28
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-02 20:57:48
+* @Last Modified time: 2014-11-09 21:53:38
  */
 
 package queue
@@ -17,8 +17,7 @@ type JournalingInmemoryQueue struct {
 }
 
 func NewJournalingInimemoryQueue() Queue {
-	tq := JournalingInmemoryQueue{InmemoryQueue{make(PriorityWaitQueue, 0),
-		make(map[string]*Task, 0),
+	tq := JournalingInmemoryQueue{InmemoryQueue{make(DelayedQueue, 0),
 		make(map[string]*Task, 0)}}
 	heap.Init(&tq)
 	return &tq
