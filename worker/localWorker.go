@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-11-02 22:33:43
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-09 21:41:42
+* @Last Modified time: 2014-11-09 22:53:23
  */
 
 package polybolos
@@ -13,8 +13,8 @@ import (
 )
 
 type LocalWorker struct {
-	WorkerConfig
-	Instance Worker
+	Config
+	Instance Interface
 }
 
 func (w *LocalWorker) Perform(payload url.Values) (err error) {

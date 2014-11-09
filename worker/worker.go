@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-11-02 22:19:25
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-09 21:41:05
+* @Last Modified time: 2014-11-09 22:48:07
  */
 
 package polybolos
@@ -12,11 +12,11 @@ import (
 	"time"
 )
 
-type Worker interface {
+type Interface interface {
 	Perform(payload url.Values) error
 }
 
-type WorkerConfig struct {
+type Config struct {
 	// Number of tries/leases after which the task fails permanently and is deleted.
 	// If AgeLimit is also set, both limits must be exceeded for the task to fail permanently.
 	RetryLimit int32

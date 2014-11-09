@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-27 02:09:33
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-09 21:54:32
+* @Last Modified time: 2014-11-09 22:53:09
  */
 
 package polybolos
@@ -24,7 +24,7 @@ const (
 )
 
 type HTTPWorker struct {
-	WorkerConfig
+	Config
 	URI    url.URL
 	Method HTTPWorkerMethod
 }

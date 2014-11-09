@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-08 22:57:10
+* @Last Modified time: 2014-11-09 22:55:02
  */
 
 package polybolos
@@ -11,6 +11,7 @@ package polybolos
 import (
 	"fmt"
 	q "github.com/souravray/polybolos/queue"
+	w "github.com/souravray/polybolos/worker"
 	"math"
 	"net/url"
 	"time"
@@ -24,7 +25,7 @@ const (
 )
 
 type WorkerResource struct {
-	Worker
+	w.Interface
 }
 
 type Queue struct {
@@ -82,7 +83,7 @@ func (q *Queue) Start() {
 					if item.Path != "" {
 						fmt.Println(item)
 						worker, _ := q.workers[item.Path]
-						worker.Worker.Perform(item.Payload)
+						worker.Interface.Perform(item.Payload)
 					}
 				}
 				q.bucket.Spend()
@@ -100,15 +101,15 @@ func (q *Queue) Delete() bool {
 	return false
 }
 
-func (q *Queue) AddHTTPWorker(name string, url url.URL, method HTTPWorkerMethod, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
-	worker := &HTTPWorker{WorkerConfig{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
+func (q *Queue) AddHTTPWorker(name string, url url.URL, method w.HTTPWorkerMethod, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
+	worker := &w.HTTPWorker{w.Config{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
 		url,
 		method}
 	q.workers[name] = &WorkerResource{worker}
 }
 
-func (q *Queue) AddLocalWorker(name string, instance Worker, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
-	worker := &LocalWorker{WorkerConfig{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
+func (q *Queue) AddLocalWorker(name string, instance w.Interface, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
+	worker := &w.LocalWorker{w.Config{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
 		instance}
 	q.workers[name] = &WorkerResource{worker}
 }
