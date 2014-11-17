@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:50:44
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-12 00:29:20
+* @Last Modified time: 2014-11-17 09:01:22
  */
 
 package queue
@@ -36,4 +36,8 @@ func (tq *InmemoryQueue) DeleteTask(task *Task) {
 	if task.index >= 0 {
 		task, _ = heap.Remove(tq, task.index).(*Task)
 	}
+}
+
+func (tq *InmemoryQueue) Close() {
+	//cleanup codes need to be go here
 }

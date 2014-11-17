@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:52:28
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-17 08:32:37
+* @Last Modified time: 2014-11-17 09:08:11
  */
 
 package queue
@@ -26,16 +26,17 @@ func NewJournalingInimemoryQueue() Interface {
 	tq := JournalingInmemoryQueue{InmemoryQueue{make(DelayedQueue, 0),
 		make(map[string]*Task, 0)}, model, make(chan bool)}
 	heap.Init(&tq)
-	go func(q *JournalingInmemoryQueue) {
-		q.DB.BatchTransaction()
+	go func(tq *JournalingInmemoryQueue) {
+		tq.DB.BatchTransaction()
 		ticker := time.NewTicker(1500 * time.Millisecond)
 		for _ = range ticker.C {
 			select {
-			case <-q.stop:
+			case <-tq.stop:
 				ticker.Stop()
+				tq.DB.TransactionEnd()
 				return
 			default:
-				q.DB.BatchTransaction()
+				tq.DB.BatchTransaction()
 			}
 		}
 	}(&tq)
@@ -66,4 +67,9 @@ func (tq *JournalingInmemoryQueue) DeleteTask(task *Task) {
 	if err == nil {
 		tq.InmemoryQueue.DeleteTask(task)
 	}
+}
+
+func (tq *JournalingInmemoryQueue) Close() {
+	tq.stop <- true
+	tq.InmemoryQueue.Close()
 }

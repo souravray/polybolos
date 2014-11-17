@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-12 00:34:19
+* @Last Modified time: 2014-11-17 09:06:36
  */
 
 package polybolos
@@ -104,6 +104,7 @@ func (q *Queue) Start() {
 
 func (q *Queue) Delete() bool {
 	if q == queue {
+		q.Close()
 		q.bucket.Close()
 		queue = nil
 		return true

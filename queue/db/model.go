@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-11-08 00:57:48
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-17 08:31:59
+* @Last Modified time: 2014-11-17 09:04:34
  */
 
 package db
@@ -73,6 +73,14 @@ func (m *Model) BatchTransaction() {
 	}
 	m.begin()
 	m.RWLock.Unlock()
+}
+
+func (m *Model) TransactionEnd() {
+	if m.Tx != nil {
+		m.RWLock.Lock()
+		m.Tx.Commit()
+		m.RWLock.Unlock()
+	}
 }
 
 func (m *Model) Add(key string, task []byte) (err error) {
