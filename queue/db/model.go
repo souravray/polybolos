@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-11-08 00:57:48
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-17 09:04:34
+* @Last Modified time: 2014-11-18 00:11:05
  */
 
 package db
@@ -39,11 +39,11 @@ func NewModel(connectionString, name string) (model *Model, err error) {
 		PRAGMA cache_spill = OFF;
 		PRAGMA foreign_keys = OFF;
 		PRAGMA journal_size_limit = 67110000;
-		PRAGMA locking_mode = FULL;
+		PRAGMA locking_mode = NORMAL;
 		PRAGMA page_size = 4096;
 		PRAGMA recursive_triggers = OFF;
 		PRAGMA secure_delete = OFF;
-		PRAGMA synchronous = NORMAL;
+		PRAGMA synchronous = FULL;
 		PRAGMA temp_store = MEMORY;
 		PRAGMA journal_mode = WAL;
 		PRAGMA wal_autocheckpoint = 16384;
