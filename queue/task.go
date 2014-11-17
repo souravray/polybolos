@@ -2,19 +2,22 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:51:37
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-02 20:58:36
+* @Last Modified time: 2014-11-12 00:35:29
  */
 
 package queue
 
 import (
+	"github.com/nu7hatch/gouuid"
 	"net/url"
 	"time"
 )
 
 type Task struct {
-	// Path is the worker URL for the task.
-	Path string
+	// Id is rfc4122 UUID for the Task
+	Id string
+	// Worker Name for the task.
+	Worker string
 
 	// Payload is the data for the task.
 	// This will be delivered as the HTTP request body in case of POST or PUT
@@ -45,11 +48,18 @@ func (task *Task) priority() int32 {
 	return int32(now - eta)
 }
 
-func NewTask(path string, payload url.Values, delay string, eta time.Time) (task *Task, err error) {
+func NewTask(worker string, payload url.Values, delay string, eta time.Time) (task *Task, err error) {
 	task = new(Task)
 	task.enqueTS = time.Now().Unix()
-	task.Path = path
+	task.Worker = worker
 	task.Payload = payload
+	var u5 *uuid.UUID
+	u5, err = uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+	task.Id = u5.String()
+
 	if !eta.IsZero() {
 		task.ETA = eta
 	} else if delay != "" {

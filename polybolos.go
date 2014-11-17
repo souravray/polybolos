@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-09 22:55:02
+* @Last Modified time: 2014-11-12 00:34:19
  */
 
 package polybolos
@@ -29,7 +29,7 @@ type WorkerResource struct {
 }
 
 type Queue struct {
-	q.Queue
+	q.Interface
 	queType   QueueType
 	bucket    *Bucket
 	queueRate int32
@@ -39,13 +39,23 @@ type Queue struct {
 
 var queue *Queue = nil
 
+func NewQueue(qtype QueueType) (queue q.Interface) {
+	switch qtype {
+	case INMEMORY:
+		queue = q.NewInimemoryQueue()
+	case INMEMORY_JOURNALING:
+		queue = q.NewJournalingInimemoryQueue()
+	}
+	return queue
+}
+
 func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) (*Queue, error) {
 	if queue == nil {
 		bucket, err := NewBucket(maxConcurrentWorker, maxDequeueRate)
 		if err != nil {
 			return nil, err
 		}
-		queueRate := int32(math.Ceil(float64(maxDequeueRate)))
+		queueRate := int32(math.Ceil(float64(maxDequeueRate/3)) * 2)
 		switch qtype {
 		case INMEMORY:
 			queue = &Queue{
@@ -80,9 +90,9 @@ func (q *Queue) Start() {
 			for i := int32(0); i < n; i++ {
 				if q.Len() > 0 {
 					item := q.PopTask()
-					if item.Path != "" {
+					if item.Worker != "" {
 						fmt.Println(item)
-						worker, _ := q.workers[item.Path]
+						worker, _ := q.workers[item.Worker]
 						worker.Interface.Perform(item.Payload)
 					}
 				}

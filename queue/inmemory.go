@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:50:44
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-09 21:53:25
+* @Last Modified time: 2014-11-12 00:29:20
  */
 
 package queue
@@ -16,7 +16,7 @@ type InmemoryQueue struct {
 	OneTheflyQueue map[string]*Task
 }
 
-func NewInimemoryQueue() Queue {
+func NewInimemoryQueue() Interface {
 	tq := InmemoryQueue{make(DelayedQueue, 0),
 		make(map[string]*Task, 0)}
 	heap.Init(&tq)

@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:04:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-09 23:00:09
+* @Last Modified time: 2014-11-17 02:16:04
  */
 
 package main
@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	p "github.com/souravray/polybolos"
+	// q "github.com/souravray/polybolos/queue"
 	w "github.com/souravray/polybolos/worker"
 	"net/url"
 	"sync"
@@ -29,7 +30,7 @@ var lock sync.Mutex
 
 func main() {
 
-	pq, err := p.GetQueue(p.INMEMORY, 5000, 5000)
+	pq, err := p.GetQueue(p.INMEMORY_JOURNALING, 500, 500)
 	pq.AddHTTPWorker("http-w", url.URL{}, w.GET, 5, 5*time.Minute, time.Second, 4*time.Second, true)
 	pq.AddLocalWorker("local-w", LazyWorker{}, 5, 5*time.Minute, time.Second, 4*time.Second, true)
 	if err != nil {
@@ -38,11 +39,11 @@ func main() {
 
 	go pq.Start()
 
-	for {
+	for o := 0; o < 10; o++ {
 		for m := 0; m < 50; m++ {
 			go func(pq *p.Queue) {
-				//var task *q.Task
-				for i := 0; i < 15; i++ {
+				// var task *q.Task
+				for i := 0; i < 50; i++ {
 					var delay string
 					delay = ""
 					item := p.NewTask("http-w", url.Values{}, delay, time.Time{})
@@ -53,13 +54,12 @@ func main() {
 					// 	task = item
 					// } else if i%7 == 0 {
 					// 	fmt.Println("call delete on", task)
-					// 	pq.DeleteTask(task)eix
+					// 	pq.DeleteTask(task)
 					// }
 				}
 			}(pq)
 		}
-		time.Sleep(1 * time.Second)
 	}
-	time.Sleep(3 * time.Second)
+	time.Sleep(60 * time.Second)
 	pq.Delete()
 }
