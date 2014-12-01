@@ -23,8 +23,8 @@ type JournalingInmemoryQueue struct {
 
 func NewJournalingInimemoryQueue() Interface {
 	model, _ := db.NewModel("./brue.sqlite", "queue")
-	tq := JournalingInmemoryQueue{InmemoryQueue{make(DelayedQueue, 0),
-		make(map[string]*Task, 0)}, model, make(chan bool)}
+	tq := JournalingInmemoryQueue{InmemoryQueue{DelayedQueue: make(DelayedQueue, 0),
+		OneTheflyQueue: make(map[string]*Task, 0)}, model, make(chan bool)}
 	heap.Init(&tq)
 	go func(tq *JournalingInmemoryQueue) {
 		tq.DB.BatchTransaction()
@@ -56,6 +56,7 @@ func (tq *JournalingInmemoryQueue) PushTask(task *Task) {
 func (tq *JournalingInmemoryQueue) PopTask() *Task {
 	task := tq.InmemoryQueue.PopTask()
 	if task.Worker != "" {
+		tq.InmemoryQueue.DeleteTask(task)
 		//fmt.Println("Journaling Pop - ", task.Id)
 	}
 

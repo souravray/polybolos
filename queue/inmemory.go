@@ -9,32 +9,40 @@ package queue
 
 import (
 	"github.com/souravray/polybolos/queue/heap"
+	"sync"
 )
 
 type InmemoryQueue struct {
 	DelayedQueue
 	OneTheflyQueue map[string]*Task
+	mutex          sync.Mutex
 }
 
 func NewInimemoryQueue() Interface {
-	tq := InmemoryQueue{make(DelayedQueue, 0),
-		make(map[string]*Task, 0)}
+	tq := InmemoryQueue{DelayedQueue: make(DelayedQueue, 0),
+		OneTheflyQueue: make(map[string]*Task, 0)}
 	heap.Init(&tq)
 	return &tq
 }
 
 func (tq *InmemoryQueue) PushTask(task *Task) {
+	tq.mutex.Lock()
 	heap.Push(tq, task)
+	tq.mutex.Unlock()
 }
 
 func (tq *InmemoryQueue) PopTask() *Task {
+	tq.mutex.Lock()
 	task, _ := heap.Pop(tq).(*Task)
+	tq.mutex.Unlock()
 	return task
 }
 
 func (tq *InmemoryQueue) DeleteTask(task *Task) {
 	if task.index >= 0 {
+		tq.mutex.Lock()
 		task, _ = heap.Remove(tq, task.index).(*Task)
+		tq.mutex.Unlock()
 	}
 }
 
