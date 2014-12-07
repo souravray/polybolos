@@ -9,9 +9,8 @@
 package polybolos
 
 import (
-	///"fmt"
-	q "github.com/souravray/polybolos/queue"
-	w "github.com/souravray/polybolos/worker"
+	Q "github.com/souravray/polybolos/queue"
+	W "github.com/souravray/polybolos/worker"
 	"math"
 	"net/url"
 	"time"
@@ -25,11 +24,11 @@ const (
 )
 
 type WorkerResource struct {
-	w.Interface
+	W.Interface
 }
 
 type Queue struct {
-	q.Interface
+	Q.Interface
 	queType   QueueType
 	bucket    *Bucket
 	queueRate int32
@@ -39,12 +38,12 @@ type Queue struct {
 
 var queue *Queue = nil
 
-func NewQueue(qtype QueueType) (queue q.Interface) {
+func NewQueue(qtype QueueType) (queue Q.Interface) {
 	switch qtype {
 	case INMEMORY:
-		queue = q.NewInimemoryQueue()
+		queue = Q.NewInimemoryQueue()
 	case INMEMORY_JOURNALING:
-		queue = q.NewJournalingInimemoryQueue()
+		queue = Q.NewJournalingInimemoryQueue()
 	}
 	return queue
 }
@@ -59,7 +58,7 @@ func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) 
 		switch qtype {
 		case INMEMORY:
 			queue = &Queue{
-				q.NewInimemoryQueue(),
+				Q.NewInimemoryQueue(),
 				qtype,
 				bucket,
 				queueRate,
@@ -67,7 +66,7 @@ func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) 
 				make(chan bool)}
 		case INMEMORY_JOURNALING:
 			queue = &Queue{
-				q.NewJournalingInimemoryQueue(),
+				Q.NewJournalingInimemoryQueue(),
 				qtype,
 				bucket,
 				queueRate,
@@ -90,10 +89,17 @@ func (q *Queue) Start() {
 			for i := int32(0); i < n; i++ {
 				item := q.PopTask()
 				if item.Worker != "" {
-					worker, _ := q.workers[item.Worker]
-					worker.Interface.Perform(item.Payload)
+					w, _ := q.workers[item.Worker]
+					go func(q *Queue, w W.Interface, payload url.Values) {
+						defer q.bucket.Spend()
+						err := w.Perform(payload)
+						if err != nil {
+
+						} else {
+
+						}
+					}(q, w.Interface, item.Payload)
 				}
-				q.bucket.Spend()
 			}
 		}
 	}
@@ -109,20 +115,20 @@ func (q *Queue) Delete() bool {
 	return false
 }
 
-func (q *Queue) AddHTTPWorker(name string, url url.URL, method w.HTTPWorkerMethod, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
-	worker := &w.HTTPWorker{w.Config{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
+func (q *Queue) AddHTTPWorker(name string, url url.URL, method HTTPWorkerMethod, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
+	worker := &W.HTTPWorker{W.Config{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
 		url,
 		method}
 	q.workers[name] = &WorkerResource{worker}
 }
 
-func (q *Queue) AddLocalWorker(name string, instance w.Interface, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
-	worker := &w.LocalWorker{w.Config{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
+func (q *Queue) AddLocalWorker(name string, instance W.Interface, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
+	worker := &W.LocalWorker{W.Config{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
 		instance}
 	q.workers[name] = &WorkerResource{worker}
 }
 
-func NewTask(path string, payload url.Values, delay string, eta time.Time) (task *q.Task) {
-	task, _ = q.NewTask(path, payload, delay, eta)
+func NewTask(path string, payload url.Values, delay string, eta time.Time) (task *Q.Task) {
+	task, _ = Q.NewTask(path, payload, delay, eta)
 	return task
 }
