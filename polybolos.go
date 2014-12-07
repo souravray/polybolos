@@ -9,7 +9,7 @@
 package polybolos
 
 import (
-	"fmt"
+	///"fmt"
 	q "github.com/souravray/polybolos/queue"
 	w "github.com/souravray/polybolos/worker"
 	"math"
@@ -88,13 +88,10 @@ func (q *Queue) Start() {
 		default:
 			n := <-q.bucket.Take(q.queueRate)
 			for i := int32(0); i < n; i++ {
-				if q.Len() > 0 {
-					item := q.PopTask()
-					if item.Worker != "" {
-						fmt.Println(item)
-						worker, _ := q.workers[item.Worker]
-						worker.Interface.Perform(item.Payload)
-					}
+				item := q.PopTask()
+				if item.Worker != "" {
+					worker, _ := q.workers[item.Worker]
+					worker.Interface.Perform(item.Payload)
 				}
 				q.bucket.Spend()
 			}
