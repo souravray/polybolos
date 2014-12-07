@@ -8,7 +8,7 @@
 package polybolos
 
 import (
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -17,7 +17,6 @@ type Bucket struct {
 	usedTokens int32
 	capacity   int32
 	freq       time.Duration
-	mutex      sync.Mutex
 	stop       chan bool
 }
 
@@ -34,46 +33,91 @@ func NewBucket(capacity int32, rate int32) (b *Bucket, err error) {
 	return
 }
 
-func (b *Bucket) Put() (success bool) {
+func (b *Bucket) setupUsedTokens(delta int32) {
+	for {
+		usedTokens := atomic.LoadInt32(&b.usedTokens)
+		if !atomic.CompareAndSwapInt32(&b.usedTokens, usedTokens, usedTokens+delta) {
+			continue
+		} else {
+			break
+		}
+	}
+	return
+}
 
-	if b.tokens+b.usedTokens < b.capacity {
-		b.mutex.Lock()
-		b.tokens++
-		b.mutex.Unlock()
+func (b *Bucket) setdownUsedTokens(delta int32) {
+	for {
+		if usedTokens := atomic.LoadInt32(&b.usedTokens); usedTokens < delta {
+			if !atomic.CompareAndSwapInt32(&b.usedTokens, usedTokens, 0) {
+				continue
+			} else {
+				break
+			}
+		} else {
+			if !atomic.CompareAndSwapInt32(&b.usedTokens, usedTokens, usedTokens-delta) {
+				continue
+			} else {
+				break
+			}
+		}
+	}
+	return
+}
+
+func (b *Bucket) Put() (success bool) {
+	for {
+		tokens := atomic.LoadInt32(&b.tokens)
+		usedTokens := atomic.LoadInt32(&b.usedTokens)
+		if tokens+usedTokens < b.capacity {
+			if !atomic.CompareAndSwapInt32(&b.tokens, tokens, tokens+1) {
+				continue
+			} else {
+				break
+			}
+		} else {
+			break
+		}
 	}
 	return
 }
 
 func (b *Bucket) Take(n int32) <-chan int32 {
-
 	c := make(chan int32)
 	go func(c chan int32, b *Bucket, n int32) {
-		// waiting loop
-		// @todo: a better solution than waiting for loop
-		for b.tokens == 0 {
-			time.Sleep(time.Duration(n * int32(b.freq.Nanoseconds())))
-		}
-		b.mutex.Lock()
-		if n > b.tokens {
-			n = b.tokens
-		}
-		b.tokens -= n
-		b.usedTokens += n
-		b.mutex.Unlock()
-		c <- n
+		var tokens int32
 		defer close(c)
-		return
+TryToTake:
+		for {
+			if tokens = atomic.LoadInt32(&b.tokens); tokens == 0 {
+				break
+			} else if n <= tokens {
+				if !atomic.CompareAndSwapInt32(&b.tokens, tokens, tokens-n) {
+					continue
+				} else {
+					break
+				}
+			} else {
+				if !atomic.CompareAndSwapInt32(&b.tokens, tokens, 0) {
+					continue
+				} else {
+					break
+				}
+			}
+		}
+
+		if tokens > 0 {
+			b.setupUsedTokens(tokens)
+			c <- tokens
+		} else {
+			time.Sleep(time.Duration(n * int32(b.freq.Nanoseconds())))
+			goto TryToTake
+		}
 	}(c, b, n)
 	return c
 }
 
-func (b *Bucket) Spend() (success bool) {
-
-	b.mutex.Lock()
-	if b.usedTokens > 0 {
-		b.usedTokens--
-	}
-	b.mutex.Unlock()
+func (b *Bucket) Spend() {
+	b.setdownUsedTokens(1)
 	return
 }
 
