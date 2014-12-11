@@ -34,3 +34,36 @@ type Config struct {
 	// Maximum number of times to double the interval between successive tries before the intervals increase linearly
 	MaxDoubling bool
 }
+
+func (wc Config) SetRetryLimit(limit int32) {
+	if limit > 0 {
+		wc.RetryLimit = limit
+	} else {
+		wc.RetryLimit = 0
+	}
+}
+
+func (wc Config) SetAgeLimit(duration string) {
+	timeduration, err := time.ParseDuration(duration)
+	if err == nil {
+		wc.AgeLimit = timeduration
+	}
+}
+
+func (wc Config) SetMinBackoff(duration string) {
+	timeduration, err := time.ParseDuration(duration)
+	if err == nil {
+		wc.MinBackoff = timeduration
+	}
+}
+
+func (wc Config) SetMaxBackoff(duration string) {
+	timeduration, err := time.ParseDuration(duration)
+	if err == nil {
+		wc.MaxBackoff = timeduration
+	}
+}
+
+func (wc Config) SetMaxDoubling(flag bool) {
+	wc.MaxDoubling = flag
+}

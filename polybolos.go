@@ -115,16 +115,20 @@ func (q *Queue) Delete() bool {
 	return false
 }
 
-func (q *Queue) AddHTTPWorker(name string, url url.URL, method HTTPWorkerMethod, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
-	worker := &W.HTTPWorker{W.Config{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
+func NewHTTPWorker(url url.URL, method HTTPWorkerMethod) (worker W.Interface) {
+	worker = &W.HTTPWorker{W.Config{DefaultRetryLimit, DefaultAgeLimit, DefaultMinBackoff, DefaultMaxBackoff, DefaulrMaxDoubling},
 		url,
-		method}
-	q.workers[name] = &WorkerResource{worker}
+		string(method)}
+	return worker
 }
 
-func (q *Queue) AddLocalWorker(name string, instance W.Interface, retryLimit int32, ageLimit, minBackoff, maxBackoff time.Duration, maxDoubling bool) {
-	worker := &W.LocalWorker{W.Config{retryLimit, ageLimit, minBackoff, maxBackoff, maxDoubling},
+func NewLocalWorker(instance W.Interface) (worker W.Interface) {
+	worker = &W.LocalWorker{W.Config{DefaultRetryLimit, DefaultAgeLimit, DefaultMinBackoff, DefaultMaxBackoff, DefaulrMaxDoubling},
 		instance}
+	return worker
+}
+
+func (q *Queue) AddWorker(name string, worker W.Interface) {
 	q.workers[name] = &WorkerResource{worker}
 }
 

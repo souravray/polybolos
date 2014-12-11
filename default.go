@@ -7,18 +7,29 @@
 
 package polybolos
 
-// import (
-// 	"time"
-// )
+import (
+	"time"
+)
 
-// // default configuration for Worker
-// var DefaultRetryLimit int32 = 5
+// default configuration for Worker
+var DefaultRetryLimit int32 = 3
 
-// var DefaultAgeLimit, DefaultMinBackoff, DefaultMaxBackoff time.Duration = 0 * time.Second
+var DefaultAgeLimit time.Duration = 0 * time.Second
+var DefaultMinBackoff time.Duration = 0 * time.Second
+var DefaultMaxBackoff time.Duration = 0 * time.Second
 
-// var DefaulrMaxDoubling bool = false
+var DefaulrMaxDoubling bool = false
 
-// // default configuration for Bucket
-// var DefaulrMaxConcurrentWorker int32 = 50
+// default configuration for Bucket
+var DefaulrMaxConcurrentWorker int32 = 10
+var DefaulrMaxDequeueRate int32 = 5
 
-// var DefaulrMaxDequeueRate int32 = 50
+// constants
+type HTTPWorkerMethod string
+
+const (
+	GET    HTTPWorkerMethod = "GET"
+	POST   HTTPWorkerMethod = "POST"
+	PUT    HTTPWorkerMethod = "PUT"
+	DELETE HTTPWorkerMethod = "DELETE"
+)
