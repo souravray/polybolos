@@ -7,7 +7,6 @@
 package queue
 
 type Interface interface {
-	Len() int
 	PushTask(task *Task)
 	PopTask() *Task
 	DeleteTask(task *Task)
