@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-27 02:09:33
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-09 22:53:09
+* @Last Modified time: 2015-01-23 14:54:36
  */
 
 package polybolos
@@ -25,28 +25,35 @@ type HTTPWorker struct {
 	Method string
 }
 
-func (w *HTTPWorker) Perform(payload url.Values) (err error) {
-	responseError := make(chan error)
-	go w.request(payload, responseError)
-	select {
-	case err = <-responseError:
-		// return a response
-	case <-time.After(time.Second * 20):
-		fmt.Println("worker timeout ")
-		err = errors.New("Worker time out")
-	}
-	close(responseError)
-	return
+func (w *HTTPWorker) Perform(payload url.Values) error {
+	err := w.request(payload)
+	/* Droping support to hard time out
+	for httpWorkers, because it is causing
+	race contions*/
+	// select {
+	// case err := <-errC:
+	// 	return err
+	// case <-time.After(time.Second * 20):
+	// 	err := errors.New("Worker time out")
+	// 	return err
+	// }
+	return err
 }
 
-func (w *HTTPWorker) request(payload url.Values, errC chan error) {
+func (w *HTTPWorker) request(payload url.Values) (err error) {
 	var postParams url.Values
 	var res *http.Response
 	var req *http.Request
-	var err error
 	tr := &http.Transport{
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 		ResponseHeaderTimeout: 18 * time.Second,
+		// for now we are relying on ResponseHeaderTimeout
+		// wich is erronus, because it is not hard timeout
+		// function. It is a problem when network connection
+		// is not available, in that case it will take
+		// additional 30s for dialer failure.
+		// solution: we need a custom implementation
+		// of dialer and transport layer
 	}
 	client := &http.Client{Transport: tr}
 
@@ -59,24 +66,26 @@ func (w *HTTPWorker) request(payload url.Values, errC chan error) {
 	urlStr := fmt.Sprintf("%v", &w.URI)
 	req, err = http.NewRequest(w.Method, urlStr, bytes.NewBufferString(postParams.Encode()))
 	if err != nil {
-		errC <- err
+		return err
 	}
 	res, err = client.Do(req)
 	if err != nil {
-		errC <- err
+		return err
 	}
 
 	if res == nil {
-		errC <- errors.New("Request doesn't return a response")
+		return errors.New("Request doesn't return a response")
 	}
 
 	fmt.Println("worker status ", res.StatusCode)
 
 	if res.StatusCode > 199 && res.StatusCode <= 299 {
-		errC <- nil
+		return nil
 	} else if res.StatusCode == 401 {
-		errC <- errors.New("Authentication error")
+		return errors.New("Authentication error")
 	} else if res.StatusCode > 299 && res.StatusCode < 600 {
-		errC <- errors.New("Request returns an error")
+		return errors.New("Request returns an error")
 	}
+
+	return errors.New("Unhandeled reference code response")
 }
