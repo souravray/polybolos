@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:50:44
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-17 09:01:22
+* @Last Modified time: 2015-02-02 01:03:29
  */
 
 package queue
@@ -32,8 +32,13 @@ func (tq *InmemoryQueue) PushTask(task *Task) {
 }
 
 func (tq *InmemoryQueue) PopTask() *Task {
+	var task *Task
 	tq.mutex.Lock()
-	task, _ := heap.Pop(tq).(*Task)
+	if tq.Len() > 0 {
+		task, _ = heap.Pop(tq).(*Task)
+	} else {
+		task = new(Task)
+	}
 	tq.mutex.Unlock()
 	return task
 }
