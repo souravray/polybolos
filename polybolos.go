@@ -3,12 +3,13 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-17 09:06:36
+* @Last Modified time: 2015-02-02 02:16:55
  */
 
 package polybolos
 
 import (
+	"fmt"
 	Q "github.com/souravray/polybolos/queue"
 	W "github.com/souravray/polybolos/worker"
 	"math"
@@ -78,7 +79,7 @@ func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) 
 }
 
 func (q *Queue) Start() {
-	go q.bucket.Fill()
+	q.bucket.Fill()
 	for {
 		select {
 		case <-q.stop:

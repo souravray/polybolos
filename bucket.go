@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-15 02:23:23
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-10-29 01:27:22
+* @Last Modified time: 2015-02-02 02:17:40
  */
 
 package polybolos
@@ -86,7 +86,7 @@ func (b *Bucket) Take(n int32) <-chan int32 {
 	go func(c chan int32, b *Bucket, n int32) {
 		var tokens int32
 		defer close(c)
-TryToTake:
+	TryToTake:
 		for {
 			if tokens = atomic.LoadInt32(&b.tokens); tokens == 0 {
 				break
@@ -122,23 +122,23 @@ func (b *Bucket) Spend() {
 }
 
 func (b *Bucket) Fill() {
-
-	b.stop = make(chan bool)
-	ticker := time.NewTicker(b.freq)
-	for _ = range ticker.C {
-		select {
-		case <-b.stop:
-			ticker.Stop()
-			return
-		default:
-			b.Put()
+	b.stop = make(chan bool, 0)
+	go func(b *Bucket) {
+		defer close(b.stop)
+		ticker := time.NewTicker(b.freq)
+		for _ = range ticker.C {
+			select {
+			case <-b.stop:
+				ticker.Stop()
+				return
+			default:
+				b.Put()
+			}
 		}
-	}
+	}(b)
 }
 
 func (b *Bucket) Close() {
-
 	b.stop <- true
-	defer close(b.stop)
 	return
 }
