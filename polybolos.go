@@ -3,13 +3,12 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-02 02:16:55
+* @Last Modified time: 2015-02-03 00:15:11
  */
 
 package polybolos
 
 import (
-	"fmt"
 	Q "github.com/souravray/polybolos/queue"
 	W "github.com/souravray/polybolos/worker"
 	"math"
@@ -100,6 +99,8 @@ func (q *Queue) Start() {
 
 						}
 					}(q, w.Interface, item.Payload)
+				} else {
+					q.bucket.Spend()
 				}
 			}
 		}
@@ -129,7 +130,7 @@ func NewLocalWorker(instance W.Interface) (worker W.Interface) {
 	return worker
 }
 
-func (q *Queue) AddWorker(name string, worker W.Interface) {
+func (q *Queue) RegisterWorker(name string, worker W.Interface) {
 	q.workers[name] = &WorkerResource{worker}
 }
 
