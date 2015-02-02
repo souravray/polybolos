@@ -2,10 +2,10 @@
 * @Author: souravray
 * @Date:   2014-11-02 22:19:25
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-03 00:31:57
+* @Last Modified time: 2015-02-03 01:15:03
  */
 
-package polybolos
+package worker
 
 import (
 	"net/url"

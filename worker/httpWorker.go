@@ -2,10 +2,10 @@
 * @Author: souravray
 * @Date:   2014-10-27 02:09:33
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-03 01:10:17
+* @Last Modified time: 2015-02-03 01:15:21
  */
 
-package polybolos
+package worker
 
 import (
 	"bytes"
