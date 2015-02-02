@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-27 02:09:33
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-01-23 14:54:36
+* @Last Modified time: 2015-02-03 01:10:17
  */
 
 package polybolos
@@ -27,16 +27,6 @@ type HTTPWorker struct {
 
 func (w *HTTPWorker) Perform(payload url.Values) error {
 	err := w.request(payload)
-	/* Droping support to hard time out
-	for httpWorkers, because it is causing
-	race contions*/
-	// select {
-	// case err := <-errC:
-	// 	return err
-	// case <-time.After(time.Second * 20):
-	// 	err := errors.New("Worker time out")
-	// 	return err
-	// }
 	return err
 }
 
@@ -45,17 +35,13 @@ func (w *HTTPWorker) request(payload url.Values) (err error) {
 	var res *http.Response
 	var req *http.Request
 	tr := &http.Transport{
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
-		ResponseHeaderTimeout: 18 * time.Second,
-		// for now we are relying on ResponseHeaderTimeout
-		// wich is erronus, because it is not hard timeout
-		// function. It is a problem when network connection
-		// is not available, in that case it will take
-		// additional 30s for dialer failure.
-		// solution: we need a custom implementation
-		// of dialer and transport layer
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	client := &http.Client{Transport: tr}
+	client := &http.Client{
+		Transport: tr,
+		// Timeout is supported from Go version 1.3 onward
+		Timeout: w.Timeout * time.Second,
+	}
 
 	if w.Method == "GET" || w.Method == "DELETE" {
 		w.URI.RawQuery = payload.Encode()
@@ -69,6 +55,7 @@ func (w *HTTPWorker) request(payload url.Values) (err error) {
 		return err
 	}
 	res, err = client.Do(req)
+
 	if err != nil {
 		return err
 	}
@@ -76,8 +63,6 @@ func (w *HTTPWorker) request(payload url.Values) (err error) {
 	if res == nil {
 		return errors.New("Request doesn't return a response")
 	}
-
-	fmt.Println("worker status ", res.StatusCode)
 
 	if res.StatusCode > 199 && res.StatusCode <= 299 {
 		return nil
