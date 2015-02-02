@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-03 00:15:11
+* @Last Modified time: 2015-02-03 00:35:32
  */
 
 package polybolos
@@ -118,14 +118,14 @@ func (q *Queue) Delete() bool {
 }
 
 func NewHTTPWorker(url url.URL, method HTTPWorkerMethod) (worker W.Interface) {
-	worker = &W.HTTPWorker{W.Config{DefaultRetryLimit, DefaultAgeLimit, DefaultMinBackoff, DefaultMaxBackoff, DefaulrMaxDoubling},
+	worker = &W.HTTPWorker{W.Config{DefaultWorkerTimeout, DefaultRetryLimit, DefaultAgeLimit, DefaultMinBackoff, DefaultMaxBackoff, DefaulrMaxDoubling},
 		url,
 		string(method)}
 	return worker
 }
 
 func NewLocalWorker(instance W.Interface) (worker W.Interface) {
-	worker = &W.LocalWorker{W.Config{DefaultRetryLimit, DefaultAgeLimit, DefaultMinBackoff, DefaultMaxBackoff, DefaulrMaxDoubling},
+	worker = &W.LocalWorker{W.Config{DefaultWorkerTimeout, DefaultRetryLimit, DefaultAgeLimit, DefaultMinBackoff, DefaultMaxBackoff, DefaulrMaxDoubling},
 		instance}
 	return worker
 }

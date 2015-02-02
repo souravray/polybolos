@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-11-02 22:19:25
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-09 22:48:07
+* @Last Modified time: 2015-02-03 00:31:57
  */
 
 package polybolos
@@ -17,6 +17,10 @@ type Interface interface {
 }
 
 type Config struct {
+	// Maximum time allocated to a worker to complete a job
+	// If Timeout is not set expilicitly, then Timeout will same as DefaultWorkerTimeout.
+	Timeout time.Duration
+
 	// Number of tries/leases after which the task fails permanently and is deleted.
 	// If AgeLimit is also set, both limits must be exceeded for the task to fail permanently.
 	RetryLimit int32
@@ -33,6 +37,13 @@ type Config struct {
 
 	// Maximum number of times to double the interval between successive tries before the intervals increase linearly
 	MaxDoubling bool
+}
+
+func (wc Config) SetTimeout(duration string) {
+	timeduration, err := time.ParseDuration(duration)
+	if err == nil {
+		wc.AgeLimit = timeduration
+	}
 }
 
 func (wc Config) SetRetryLimit(limit int32) {

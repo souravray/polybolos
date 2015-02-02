@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-12 01:31:40
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-12 00:34:39
+* @Last Modified time: 2015-02-03 00:34:25
  */
 
 package polybolos
@@ -14,6 +14,7 @@ import (
 // default configuration for Worker
 var DefaultRetryLimit int32 = 3
 
+var DefaultWorkerTimeout = 30 * time.Second
 var DefaultAgeLimit time.Duration = 0 * time.Second
 var DefaultMinBackoff time.Duration = 0 * time.Second
 var DefaultMaxBackoff time.Duration = 0 * time.Second
