@@ -3,13 +3,14 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-03 00:35:32
+* @Last Modified time: 2015-02-04 03:15:09
  */
 
 package polybolos
 
 import (
 	Q "github.com/souravray/polybolos/queue"
+	"github.com/souravray/polybolos/sys"
 	W "github.com/souravray/polybolos/worker"
 	"math"
 	"net/url"
@@ -48,8 +49,18 @@ func NewQueue(qtype QueueType) (queue Q.Interface) {
 	return queue
 }
 
+func getWorkerCapacity(maxConcurrentWorker int32) int32 {
+	maxFDLimit := uint64(maxConcurrentWorker * 2)
+	newLimit, _ := sys.SetFDLimits(maxFDLimit)
+	if newLimit > 0 && newLimit < maxFDLimit {
+		maxConcurrentWorker = int32(math.Floor(float64(newLimit / 2)))
+	}
+	return maxConcurrentWorker
+}
+
 func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) (*Queue, error) {
 	if queue == nil {
+		maxConcurrentWorker = getWorkerCapacity(maxConcurrentWorker)
 		bucket, err := NewBucket(maxConcurrentWorker, maxDequeueRate)
 		if err != nil {
 			return nil, err
