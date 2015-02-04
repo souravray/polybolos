@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-15 02:23:23
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-02 02:17:40
+* @Last Modified time: 2015-02-04 23:44:25
  */
 
 package polybolos
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type Bucket struct {
+type bucket struct {
 	tokens     int32
 	usedTokens int32
 	capacity   int32
@@ -20,9 +20,9 @@ type Bucket struct {
 	stop       chan bool
 }
 
-func NewBucket(capacity int32, rate int32) (b *Bucket, err error) {
+func newBucket(capacity int32, rate int32) (b *bucket, err error) {
 
-	b = &Bucket{capacity: capacity}
+	b = &bucket{capacity: capacity}
 	minFreq := time.Duration(1e9 / int64(capacity))
 	freq := time.Duration(1e9 / int64(rate))
 	if minFreq > freq {
@@ -33,7 +33,7 @@ func NewBucket(capacity int32, rate int32) (b *Bucket, err error) {
 	return
 }
 
-func (b *Bucket) setupUsedTokens(delta int32) {
+func (b *bucket) setupUsedTokens(delta int32) {
 	for {
 		usedTokens := atomic.LoadInt32(&b.usedTokens)
 		if !atomic.CompareAndSwapInt32(&b.usedTokens, usedTokens, usedTokens+delta) {
@@ -45,7 +45,7 @@ func (b *Bucket) setupUsedTokens(delta int32) {
 	return
 }
 
-func (b *Bucket) setdownUsedTokens(delta int32) {
+func (b *bucket) setdownUsedTokens(delta int32) {
 	for {
 		if usedTokens := atomic.LoadInt32(&b.usedTokens); usedTokens < delta {
 			if !atomic.CompareAndSwapInt32(&b.usedTokens, usedTokens, 0) {
@@ -64,7 +64,7 @@ func (b *Bucket) setdownUsedTokens(delta int32) {
 	return
 }
 
-func (b *Bucket) Put() (success bool) {
+func (b *bucket) Put() (success bool) {
 	for {
 		tokens := atomic.LoadInt32(&b.tokens)
 		usedTokens := atomic.LoadInt32(&b.usedTokens)
@@ -81,9 +81,9 @@ func (b *Bucket) Put() (success bool) {
 	return
 }
 
-func (b *Bucket) Take(n int32) <-chan int32 {
+func (b *bucket) Take(n int32) <-chan int32 {
 	c := make(chan int32)
-	go func(c chan int32, b *Bucket, n int32) {
+	go func(c chan int32, b *bucket, n int32) {
 		var tokens int32
 		defer close(c)
 	TryToTake:
@@ -116,14 +116,14 @@ func (b *Bucket) Take(n int32) <-chan int32 {
 	return c
 }
 
-func (b *Bucket) Spend() {
+func (b *bucket) Spend() {
 	b.setdownUsedTokens(1)
 	return
 }
 
-func (b *Bucket) Fill() {
+func (b *bucket) Fill() {
 	b.stop = make(chan bool, 0)
-	go func(b *Bucket) {
+	go func(b *bucket) {
 		defer close(b.stop)
 		ticker := time.NewTicker(b.freq)
 		for _ = range ticker.C {
@@ -138,7 +138,7 @@ func (b *Bucket) Fill() {
 	}(b)
 }
 
-func (b *Bucket) Close() {
+func (b *bucket) Close() {
 	b.stop <- true
 	return
 }

@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-04 03:15:09
+* @Last Modified time: 2015-02-05 00:08:15
  */
 
 package polybolos
@@ -17,10 +17,10 @@ import (
 	"time"
 )
 
-type QueueType int
+type queueType int
 
 const (
-	INMEMORY QueueType = iota
+	INMEMORY queueType = iota
 	INMEMORY_JOURNALING
 )
 
@@ -30,8 +30,8 @@ type WorkerResource struct {
 
 type Queue struct {
 	Q.Interface
-	queType   QueueType
-	bucket    *Bucket
+	queType   queueType
+	bucket    *bucket
 	queueRate int32
 	workers   map[string]*WorkerResource
 	stop      chan bool
@@ -39,7 +39,7 @@ type Queue struct {
 
 var queue *Queue = nil
 
-func NewQueue(qtype QueueType) (queue Q.Interface) {
+func NewQueue(qtype queueType) (queue Q.Interface) {
 	switch qtype {
 	case INMEMORY:
 		queue = Q.NewInimemoryQueue()
@@ -58,10 +58,10 @@ func getWorkerCapacity(maxConcurrentWorker int32) int32 {
 	return maxConcurrentWorker
 }
 
-func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) (*Queue, error) {
+func GetQueue(qtype queueType, maxConcurrentWorker int32, maxDequeueRate int32) (*Queue, error) {
 	if queue == nil {
 		maxConcurrentWorker = getWorkerCapacity(maxConcurrentWorker)
-		bucket, err := NewBucket(maxConcurrentWorker, maxDequeueRate)
+		b, err := newBucket(maxConcurrentWorker, maxDequeueRate)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) 
 			queue = &Queue{
 				Q.NewInimemoryQueue(),
 				qtype,
-				bucket,
+				b,
 				queueRate,
 				make(map[string]*WorkerResource),
 				make(chan bool)}
@@ -79,7 +79,7 @@ func GetQueue(qtype QueueType, maxConcurrentWorker int32, maxDequeueRate int32) 
 			queue = &Queue{
 				Q.NewJournalingInimemoryQueue(),
 				qtype,
-				bucket,
+				b,
 				queueRate,
 				make(map[string]*WorkerResource),
 				make(chan bool)}
