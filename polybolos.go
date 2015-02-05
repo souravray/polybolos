@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-05 00:08:15
+* @Last Modified time: 2015-02-05 21:47:14
  */
 
 package polybolos
@@ -98,24 +98,35 @@ func (q *Queue) Start() {
 		default:
 			n := <-q.bucket.Take(q.queueRate)
 			for i := int32(0); i < n; i++ {
-				item := q.PopTask()
-				if item.Worker != "" {
-					w, _ := q.workers[item.Worker]
-					go func(q *Queue, w W.Interface, payload url.Values) {
-						defer q.bucket.Spend()
-						err := w.Perform(payload)
-						if err != nil {
-
-						} else {
-
-						}
-					}(q, w.Interface, item.Payload)
+				task := q.PopTask()
+				if task.Worker != "" {
+					w, _ := q.workers[task.Worker]
+					go q.dispatch(w.Interface, task)
 				} else {
 					q.bucket.Spend()
 				}
 			}
 		}
 	}
+}
+
+func (q *Queue) dispatch(w W.Interface, task *Q.Task) {
+	defer q.bucket.Spend()
+	err := w.Perform(task.Payload)
+	if err != nil {
+		q.reenqueue(w, task)
+	} else {
+		q.done(task)
+	}
+	q.bucket.Spend()
+}
+
+func (q *Queue) reenqueue(w W.Interface, task *Q.Task) {
+
+}
+
+func (q *Queue) done(task *Q.Task) {
+
 }
 
 func (q *Queue) Delete() bool {
