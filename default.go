@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-12 01:31:40
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-03 00:34:25
+* @Last Modified time: 2015-02-07 03:18:55
  */
 
 package polybolos
@@ -16,10 +16,10 @@ var DefaultRetryLimit int32 = 3
 
 var DefaultWorkerTimeout = 30 * time.Second
 var DefaultAgeLimit time.Duration = 0 * time.Second
-var DefaultMinBackoff time.Duration = 0 * time.Second
+var DefaultMinBackoff time.Duration = 1 * time.Second
 var DefaultMaxBackoff time.Duration = 0 * time.Second
 
-var DefaulrMaxDoubling bool = false
+var DefaulrMaxDoubling int32 = 0
 
 // default configuration for Bucket
 var DefaulrMaxConcurrentWorker int32 = 10
