@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:51:37
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-12 00:35:29
+* @Last Modified time: 2015-02-08 01:45:01
  */
 
 package queue
@@ -33,11 +33,10 @@ type Task struct {
 	ETA time.Time
 
 	// The number of times the task has been dispatched
-	RetryCount int
+	RetryCount int32
 
-	// private properties
 	//Time when task is equed to queue for the first time
-	enqueTS int64
+	EnqueTime time.Time
 	// index refers to the queue position
 	index int
 }
@@ -50,9 +49,10 @@ func (task *Task) priority() int32 {
 
 func NewTask(worker string, payload url.Values, delay string, eta time.Time) (task *Task, err error) {
 	task = new(Task)
-	task.enqueTS = time.Now().Unix()
+	task.EnqueTime = time.Now()
 	task.Worker = worker
 	task.Payload = payload
+	task.RetryCount = 0
 	var u5 *uuid.UUID
 	u5, err = uuid.NewV4()
 	if err != nil {

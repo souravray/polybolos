@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-05 21:47:14
+* @Last Modified time: 2015-02-08 09:29:39
  */
 
 package polybolos
@@ -122,7 +122,28 @@ func (q *Queue) dispatch(w W.Interface, task *Q.Task) {
 }
 
 func (q *Queue) reenqueue(w W.Interface, task *Q.Task) {
+	retryLimit := w.GetRetryLimit()
+	ageLimit := w.GetAgeLimit()
+	retryAttempt := task.RetryCount + 1
+	taskAge := time.Since(task.EnqueTime)
 
+	if retryLimit == int32(0) || retryLimit > retryAttempt {
+		if ageLimit == time.Duration(0) || ageLimit > taskAge {
+			task.MinDelay = w.GetInterval(retryAttempt)
+			task.RetryCount = retryAttempt
+			q.PushTask(task)
+		} else {
+			q.done(task)
+		}
+	} else {
+		if ageLimit == time.Duration(0) || taskAge >= ageLimit {
+			q.done(task)
+		} else {
+			task.MinDelay = w.GetInterval(retryAttempt)
+			task.RetryCount = retryAttempt
+			q.PushTask(task)
+		}
+	}
 }
 
 func (q *Queue) done(task *Q.Task) {

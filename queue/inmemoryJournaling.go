@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:52:28
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-17 09:08:11
+* @Last Modified time: 2015-02-08 09:21:29
  */
 
 package queue
@@ -47,7 +47,14 @@ func (tq *JournalingInmemoryQueue) PushTask(task *Task) {
 	var wbuff bytes.Buffer
 	enc := gob.NewEncoder(&wbuff)
 	enc.Encode(task)
-	err := tq.DB.Add(task.Id, wbuff.Bytes())
+
+	var err error
+	if task.RetryCount == 0 {
+		err = tq.DB.Add(task.Id, wbuff.Bytes())
+	} else {
+		err = tq.DB.Update(task.Id, wbuff.Bytes())
+	}
+
 	if err == nil {
 		tq.InmemoryQueue.PushTask(task)
 	}

@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-11-02 22:19:25
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-07 03:12:46
+* @Last Modified time: 2015-02-07 23:34:47
  */
 
 package worker
@@ -30,7 +30,7 @@ type Config struct {
 	// If Timeout is not set expilicitly, then Timeout will same as DefaultWorkerTimeout.
 	Timeout time.Duration
 
-	// Number of tries/leases after which the task fails permanently and is deleted.
+	// Number of tries after which the task fails permanently and is deleted.
 	// If AgeLimit is also set, both limits must be exceeded for the task to fail permanently.
 	RetryLimit int32
 
