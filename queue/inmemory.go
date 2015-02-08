@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:50:44
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-02 01:03:29
+* @Last Modified time: 2015-02-08 23:09:53
  */
 
 package queue
@@ -51,6 +51,10 @@ func (tq *InmemoryQueue) DeleteTask(task *Task) {
 	}
 }
 
+func (tq *InmemoryQueue) CleanTask(task *Task) {
+	//task clean-up code
+}
+
 func (tq *InmemoryQueue) Close() {
-	//cleanup codes need to be go here
+	//queue clean-up codes
 }

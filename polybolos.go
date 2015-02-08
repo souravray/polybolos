@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-08 09:29:39
+* @Last Modified time: 2015-02-08 22:37:26
  */
 
 package polybolos
@@ -147,7 +147,7 @@ func (q *Queue) reenqueue(w W.Interface, task *Q.Task) {
 }
 
 func (q *Queue) done(task *Q.Task) {
-
+	q.CleanTask(task)
 }
 
 func (q *Queue) Delete() bool {

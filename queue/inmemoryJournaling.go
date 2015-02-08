@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:52:28
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-08 09:21:29
+* @Last Modified time: 2015-02-08 23:09:01
  */
 
 package queue
@@ -62,11 +62,6 @@ func (tq *JournalingInmemoryQueue) PushTask(task *Task) {
 
 func (tq *JournalingInmemoryQueue) PopTask() *Task {
 	task := tq.InmemoryQueue.PopTask()
-	if task.Worker != "" {
-		tq.InmemoryQueue.DeleteTask(task)
-		//fmt.Println("Journaling Pop - ", task.Id)
-	}
-
 	return task
 }
 
@@ -75,6 +70,10 @@ func (tq *JournalingInmemoryQueue) DeleteTask(task *Task) {
 	if err == nil {
 		tq.InmemoryQueue.DeleteTask(task)
 	}
+}
+
+func (tq *JournalingInmemoryQueue) CleanTask(task *Task) {
+	tq.DB.Delete(task.Id)
 }
 
 func (tq *JournalingInmemoryQueue) Close() {
