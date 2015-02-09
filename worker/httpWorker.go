@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-27 02:09:33
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-03 01:15:21
+* @Last Modified time: 2015-02-09 21:49:36
  */
 
 package worker
@@ -26,14 +26,11 @@ type HTTPWorker struct {
 }
 
 func (w *HTTPWorker) Perform(payload url.Values) error {
-	err := w.request(payload)
-	return err
-}
-
-func (w *HTTPWorker) request(payload url.Values) (err error) {
 	var postParams url.Values
 	var res *http.Response
 	var req *http.Request
+	var err error
+
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
