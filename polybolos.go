@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-08 22:37:26
+* @Last Modified time: 2015-02-10 23:40:22
  */
 
 package polybolos
@@ -167,7 +167,7 @@ func NewHTTPWorker(url url.URL, method HTTPWorkerMethod) (worker W.Interface) {
 	return worker
 }
 
-func NewLocalWorker(instance W.Interface) (worker W.Interface) {
+func NewLocalWorker(instance W.LocalInterface) (worker W.Interface) {
 	worker = &W.LocalWorker{W.Config{DefaultWorkerTimeout, DefaultRetryLimit, DefaultAgeLimit, DefaultMinBackoff, DefaultMaxBackoff, DefaulrMaxDoubling},
 		instance}
 	return worker

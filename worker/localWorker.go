@@ -2,27 +2,35 @@
 * @Author: souravray
 * @Date:   2014-11-02 22:33:43
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-03 01:15:17
+* @Last Modified time: 2015-02-10 23:04:29
  */
 
 package worker
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
+	"time"
 )
 
-// type localInterface interface {
-// 	Perform(errC chan err, payload url.Values) error
-// }
+type LocalInterface interface {
+	Perform(payload url.Values, err chan error)
+}
 
 type LocalWorker struct {
 	Config
-	Instance Interface
+	Instance LocalInterface
 }
 
 func (w *LocalWorker) Perform(payload url.Values) (err error) {
-	//errC := make(chan error, 1)
-	fmt.Println("local worker called")
+	c := make(chan error, 1)
+	go w.Instance.Perform(payload, c)
+	select {
+	case err = <-c:
+	case <-time.After(w.Timeout):
+		err = errors.New("Worker timeout")
+	}
+	fmt.Println(err, w.Timeout)
 	return
 }
