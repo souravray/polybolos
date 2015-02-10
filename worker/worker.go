@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-11-02 22:19:25
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-07 23:34:47
+* @Last Modified time: 2015-02-10 01:17:01
  */
 
 package worker
@@ -48,14 +48,14 @@ type Config struct {
 	MaxDoubling int32
 }
 
-func (wc Config) SetTimeout(duration string) {
+func (wc *Config) SetTimeout(duration string) {
 	timeduration, err := time.ParseDuration(duration)
 	if err == nil {
-		wc.AgeLimit = timeduration
+		wc.Timeout = timeduration
 	}
 }
 
-func (wc Config) SetRetryLimit(limit int32) {
+func (wc *Config) SetRetryLimit(limit int32) {
 	if limit > 0 {
 		wc.RetryLimit = limit
 	} else {
@@ -63,40 +63,40 @@ func (wc Config) SetRetryLimit(limit int32) {
 	}
 }
 
-func (wc Config) GetRetryLimit() int32 {
+func (wc *Config) GetRetryLimit() int32 {
 	return wc.RetryLimit
 }
 
-func (wc Config) SetAgeLimit(duration string) {
+func (wc *Config) SetAgeLimit(duration string) {
 	timeduration, err := time.ParseDuration(duration)
 	if err == nil {
 		wc.AgeLimit = timeduration
 	}
 }
 
-func (wc Config) GetAgeLimit() time.Duration {
+func (wc *Config) GetAgeLimit() time.Duration {
 	return wc.AgeLimit
 }
 
-func (wc Config) SetMinBackoff(duration string) {
+func (wc *Config) SetMinBackoff(duration string) {
 	timeduration, err := time.ParseDuration(duration)
 	if err == nil {
 		wc.MinBackoff = timeduration
 	}
 }
 
-func (wc Config) SetMaxBackoff(duration string) {
+func (wc *Config) SetMaxBackoff(duration string) {
 	timeduration, err := time.ParseDuration(duration)
 	if err == nil {
 		wc.MaxBackoff = timeduration
 	}
 }
 
-func (wc Config) SetMaxDoubling(attempts int32) {
+func (wc *Config) SetMaxDoubling(attempts int32) {
 	wc.MaxDoubling = attempts
 }
 
-func (wc Config) GetInterval(retryAttempts int32) time.Duration {
+func (wc *Config) GetInterval(retryAttempts int32) time.Duration {
 	var interval time.Duration
 	if wc.MaxDoubling <= 0 {
 		interval = wc.MinBackoff
@@ -110,8 +110,7 @@ func (wc Config) GetInterval(retryAttempts int32) time.Duration {
 	return wc.intervalPassFilter(interval)
 }
 
-func (wc Config) intervalPassFilter(interval time.Duration) time.Duration {
-
+func (wc *Config) intervalPassFilter(interval time.Duration) time.Duration {
 	if wc.MaxBackoff == time.Duration(0) ||
 		wc.MinBackoff > wc.MaxBackoff {
 		return interval
