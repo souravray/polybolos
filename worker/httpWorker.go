@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-27 02:09:33
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-09 21:49:36
+* @Last Modified time: 2015-02-10 00:19:44
  */
 
 package worker
@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 var i int = 0
@@ -37,7 +36,7 @@ func (w *HTTPWorker) Perform(payload url.Values) error {
 	client := &http.Client{
 		Transport: tr,
 		// Timeout is supported from Go version 1.3 onward
-		Timeout: w.Timeout * time.Second,
+		Timeout: w.Timeout,
 	}
 
 	if w.Method == "GET" || w.Method == "DELETE" {
