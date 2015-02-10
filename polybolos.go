@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-10 23:40:22
+* @Last Modified time: 2015-02-10 23:43:16
  */
 
 package polybolos
@@ -129,7 +129,8 @@ func (q *Queue) reenqueue(w W.Interface, task *Q.Task) {
 
 	if retryLimit == int32(0) || retryLimit > retryAttempt {
 		if ageLimit == time.Duration(0) || ageLimit > taskAge {
-			task.MinDelay = w.GetInterval(retryAttempt)
+			delay := w.GetInterval(retryAttempt)
+			task.ETA = time.Now().Add(delay)
 			task.RetryCount = retryAttempt
 			q.PushTask(task)
 		} else {
