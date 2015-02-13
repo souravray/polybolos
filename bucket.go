@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-15 02:23:23
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-04 23:44:25
+* @Last Modified time: 2015-02-13 08:06:36
  */
 
 package polybolos
@@ -132,7 +132,7 @@ func (b *bucket) Fill() {
 				ticker.Stop()
 				return
 			default:
-				b.Put()
+				go b.Put()
 			}
 		}
 	}(b)
