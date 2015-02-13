@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:51:37
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-08 01:45:01
+* @Last Modified time: 2015-02-11 01:39:35
  */
 
 package queue
@@ -25,7 +25,7 @@ type Task struct {
 	Payload url.Values
 
 	// Minimum Delay specifies the duration the task queue service atleast wait
-	// before executing the task.
+	// before executing the task for the first time.
 	// Either Delay or ETA may be set, if both are set then MinDelay will be ignored.
 	MinDelay time.Duration
 
