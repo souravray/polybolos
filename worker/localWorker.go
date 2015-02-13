@@ -2,14 +2,13 @@
 * @Author: souravray
 * @Date:   2014-11-02 22:33:43
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-10 23:04:29
+* @Last Modified time: 2015-02-13 08:43:30
  */
 
 package worker
 
 import (
 	"errors"
-	"fmt"
 	"net/url"
 	"time"
 )
@@ -31,6 +30,5 @@ func (w *LocalWorker) Perform(payload url.Values) (err error) {
 	case <-time.After(w.Timeout):
 		err = errors.New("Worker timeout")
 	}
-	fmt.Println(err, w.Timeout)
 	return
 }
