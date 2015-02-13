@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-10 23:43:16
+* @Last Modified time: 2015-02-13 08:42:35
  */
 
 package polybolos
@@ -126,13 +126,16 @@ func (q *Queue) reenqueue(w W.Interface, task *Q.Task) {
 	ageLimit := w.GetAgeLimit()
 	retryAttempt := task.RetryCount + 1
 	taskAge := time.Since(task.EnqueTime)
+	taskEnque := func(q *Queue, w W.Interface, task *Q.Task, retryAttempt int32) {
+		delay := w.GetInterval(retryAttempt)
+		task.ETA = time.Now().Add(delay)
+		task.RetryCount = retryAttempt
+		q.PushTask(task)
+	}
 
 	if retryLimit == int32(0) || retryLimit > retryAttempt {
 		if ageLimit == time.Duration(0) || ageLimit > taskAge {
-			delay := w.GetInterval(retryAttempt)
-			task.ETA = time.Now().Add(delay)
-			task.RetryCount = retryAttempt
-			q.PushTask(task)
+			taskEnque(q, w, task, retryAttempt)
 		} else {
 			q.done(task)
 		}
@@ -140,9 +143,7 @@ func (q *Queue) reenqueue(w W.Interface, task *Q.Task) {
 		if ageLimit == time.Duration(0) || taskAge >= ageLimit {
 			q.done(task)
 		} else {
-			task.MinDelay = w.GetInterval(retryAttempt)
-			task.RetryCount = retryAttempt
-			q.PushTask(task)
+			taskEnque(q, w, task, retryAttempt)
 		}
 	}
 }
