@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-15 02:23:23
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-14 15:31:13
+* @Last Modified time: 2015-02-14 23:17:35
  */
 
 package polybolos
@@ -23,12 +23,11 @@ type bucket struct {
 func newBucket(capacity int32, rate int32) (b *bucket, err error) {
 
 	b = &bucket{capacity: capacity}
-	minFreq := time.Duration(1e9 / int64(capacity))
 	period := time.Duration(1e9 / int64(rate))
-	if minFreq > period {
-		b.period = minFreq
-	} else {
+	if period > 0 {
 		b.period = period
+	} else {
+		b.period = 1
 	}
 	return
 }
