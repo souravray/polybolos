@@ -2,12 +2,13 @@
 * @Author: souravray
 * @Date:   2014-10-15 02:23:23
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-14 23:17:35
+* @Last Modified time: 2015-02-14 23:40:12
  */
 
 package polybolos
 
 import (
+	"math"
 	"sync/atomic"
 	"time"
 )
@@ -17,12 +18,21 @@ type bucket struct {
 	usedTokens int32
 	capacity   int32
 	period     time.Duration
+	fillSize   int32
 	stop       chan bool
 }
 
 func newBucket(capacity int32, rate int32) (b *bucket, err error) {
 
 	b = &bucket{capacity: capacity}
+
+	if rate > 100 {
+		b.fillSize = int32(math.Ceil(float64(rate / 10)))
+		rate = 10
+	} else {
+		b.fillSize = 1
+	}
+
 	period := time.Duration(1e9 / int64(rate))
 	if period > 0 {
 		b.period = period
@@ -63,12 +73,12 @@ func (b *bucket) setdownUsedTokens(delta int32) {
 	return
 }
 
-func (b *bucket) Put() (success bool) {
+func (b *bucket) Put(n int32) (success bool) {
 	for {
 		tokens := atomic.LoadInt32(&b.tokens)
 		usedTokens := atomic.LoadInt32(&b.usedTokens)
 		if tokens+usedTokens < b.capacity {
-			if !atomic.CompareAndSwapInt32(&b.tokens, tokens, tokens+1) {
+			if !atomic.CompareAndSwapInt32(&b.tokens, tokens, tokens+n) {
 				continue
 			} else {
 				break
@@ -131,7 +141,7 @@ func (b *bucket) Fill() {
 				ticker.Stop()
 				return
 			default:
-				go b.Put()
+				go b.Put(b.fillSize)
 			}
 		}
 	}(b)
