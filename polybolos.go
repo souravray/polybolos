@@ -3,7 +3,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:52:00
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-13 08:42:35
+* @Last Modified time: 2015-02-14 23:56:37
  */
 
 package polybolos
@@ -47,6 +47,10 @@ func NewQueue(qtype queueType) (queue Q.Interface) {
 		queue = Q.NewJournalingInimemoryQueue()
 	}
 	return queue
+}
+
+func init() {
+	sys.UseMaxCPUs()
 }
 
 func getWorkerCapacity(maxConcurrentWorker int32) int32 {
