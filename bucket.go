@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-15 02:23:23
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-13 08:06:36
+* @Last Modified time: 2015-02-14 15:31:13
  */
 
 package polybolos
@@ -16,7 +16,7 @@ type bucket struct {
 	tokens     int32
 	usedTokens int32
 	capacity   int32
-	freq       time.Duration
+	period     time.Duration
 	stop       chan bool
 }
 
@@ -24,11 +24,11 @@ func newBucket(capacity int32, rate int32) (b *bucket, err error) {
 
 	b = &bucket{capacity: capacity}
 	minFreq := time.Duration(1e9 / int64(capacity))
-	freq := time.Duration(1e9 / int64(rate))
-	if minFreq > freq {
-		b.freq = minFreq
+	period := time.Duration(1e9 / int64(rate))
+	if minFreq > period {
+		b.period = minFreq
 	} else {
-		b.freq = freq
+		b.period = period
 	}
 	return
 }
@@ -109,7 +109,7 @@ func (b *bucket) Take(n int32) <-chan int32 {
 			b.setupUsedTokens(tokens)
 			c <- tokens
 		} else {
-			time.Sleep(time.Duration(n * int32(b.freq.Nanoseconds())))
+			time.Sleep(time.Duration(n * int32(b.period.Nanoseconds())))
 			goto TryToTake
 		}
 	}(c, b, n)
@@ -125,7 +125,7 @@ func (b *bucket) Fill() {
 	b.stop = make(chan bool, 0)
 	go func(b *bucket) {
 		defer close(b.stop)
-		ticker := time.NewTicker(b.freq)
+		ticker := time.NewTicker(b.period)
 		for _ = range ticker.C {
 			select {
 			case <-b.stop:
