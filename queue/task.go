@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:51:37
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-15 20:12:20
+* @Last Modified time: 2015-02-16 03:51:50
  */
 
 package queue
@@ -16,6 +16,7 @@ import (
 type Task struct {
 	// Id is rfc4122 UUID for the Task
 	Id string
+
 	// Worker Name for the task.
 	Worker string
 
@@ -41,13 +42,7 @@ type Task struct {
 	index int
 }
 
-func (task *Task) priority() int32 {
-	eta := task.ETA.Unix()
-	now := time.Now().Unix()
-	return int32(now - eta)
-}
-
-func NewTask(worker string, payload url.Values, delay string, eta time.Time) (task *Task, err error) {
+func NewTask(worker string, payload url.Values) (task *Task, err error) {
 	var uid *uuid.UUID
 	uid, err = uuid.NewV4()
 	if err != nil {
@@ -59,19 +54,40 @@ func NewTask(worker string, payload url.Values, delay string, eta time.Time) (ta
 		EnqueTime:  time.Now(),
 		Worker:     worker,
 		Payload:    payload,
+		MinDelay:   time.Duration(0),
+		ETA:        time.Now(),
 		RetryCount: 0,
 	}
 
-	if !eta.IsZero() {
-		task.ETA = eta
-	} else if delay != "" {
+	return
+}
+
+func (task *Task) SetDelay(delay string) {
+	var err error
+	if delay != "" {
 		task.MinDelay, err = time.ParseDuration(delay)
 		if err != nil {
 			return
 		}
 		task.ETA = time.Now().Add(task.MinDelay)
-	} else {
-		task.ETA = time.Now()
 	}
-	return
+}
+
+func (task *Task) SetETA(eta time.Time) {
+	if eta.IsZero() == false {
+		task.ETA = eta
+	}
+}
+
+func (task *Task) IsEmpty() bool {
+	if task.Worker == "" {
+		return true
+	}
+	return false
+}
+
+func (task *Task) priority() int32 {
+	eta := task.ETA.Unix()
+	now := time.Now().Unix()
+	return int32(now - eta)
 }
