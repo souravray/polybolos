@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-11 19:51:37
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-11 01:39:35
+* @Last Modified time: 2015-02-15 20:12:20
  */
 
 package queue
@@ -48,17 +48,19 @@ func (task *Task) priority() int32 {
 }
 
 func NewTask(worker string, payload url.Values, delay string, eta time.Time) (task *Task, err error) {
-	task = new(Task)
-	task.EnqueTime = time.Now()
-	task.Worker = worker
-	task.Payload = payload
-	task.RetryCount = 0
-	var u5 *uuid.UUID
-	u5, err = uuid.NewV4()
+	var uid *uuid.UUID
+	uid, err = uuid.NewV4()
 	if err != nil {
 		return nil, err
 	}
-	task.Id = u5.String()
+
+	task = &Task{
+		Id:         uid.String(),
+		EnqueTime:  time.Now(),
+		Worker:     worker,
+		Payload:    payload,
+		RetryCount: 0,
+	}
 
 	if !eta.IsZero() {
 		task.ETA = eta
