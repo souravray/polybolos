@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-15 02:23:23
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-14 23:40:12
+* @Last Modified time: 2015-02-15 19:15:17
  */
 
 package polybolos
@@ -73,6 +73,11 @@ func (b *bucket) setdownUsedTokens(delta int32) {
 	return
 }
 
+func (b *bucket) getWaitTime(n int32) time.Duration {
+	l := math.Ceil(float64(n / b.fillSize))
+	return time.Duration(l * float64(b.period.Nanoseconds()))
+}
+
 func (b *bucket) Put(n int32) (success bool) {
 	for {
 		tokens := atomic.LoadInt32(&b.tokens)
@@ -118,7 +123,7 @@ func (b *bucket) Take(n int32) <-chan int32 {
 			b.setupUsedTokens(tokens)
 			c <- tokens
 		} else {
-			time.Sleep(time.Duration(n * int32(b.period.Nanoseconds())))
+			time.Sleep(b.getWaitTime(n))
 			goto TryToTake
 		}
 	}(c, b, n)
