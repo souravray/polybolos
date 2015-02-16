@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:52:28
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-08 23:09:01
+* @Last Modified time: 2015-02-17 01:34:56
  */
 
 package queue
@@ -23,8 +23,11 @@ type JournalingInmemoryQueue struct {
 
 func NewJournalingInimemoryQueue() Interface {
 	model, _ := db.NewModel("./brue.sqlite", "queue")
-	tq := JournalingInmemoryQueue{InmemoryQueue{DelayedQueue: make(DelayedQueue, 0),
-		OneTheflyQueue: make(map[string]*Task, 0)}, model, make(chan bool)}
+	tq := JournalingInmemoryQueue{
+		InmemoryQueue{DelayedQueue: make(DelayedQueue, 0)},
+		model,
+		make(chan bool),
+	}
 	heap.Init(&tq)
 	go func(tq *JournalingInmemoryQueue) {
 		tq.DB.BatchTransaction()
@@ -73,6 +76,7 @@ func (tq *JournalingInmemoryQueue) DeleteTask(task *Task) {
 }
 
 func (tq *JournalingInmemoryQueue) CleanTask(task *Task) {
+	tq.InmemoryQueue.CleanTask(task)
 	tq.DB.Delete(task.Id)
 }
 

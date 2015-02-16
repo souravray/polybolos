@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2015-02-16 00:54:54
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-16 04:15:32
+* @Last Modified time: 2015-02-17 01:42:08
  */
 
 package polybolos
@@ -25,21 +25,28 @@ type workerResource struct {
 	Worker
 }
 
+// Interface for the push Queue, the standardQueue structure implements the
+// interface. You can start dispatching task to worker by calling Start(),
+// and can pause by calling Pause(). Calling Close() will close the queue
+// and return a boolian true on success. RegisterWorker register a new worker
+// to the worker pool. New task can be added or removed from the Queue using
+// AddTask and RemoveTask.
 type Queue interface {
 	Start()
-	Delete() bool
+	Pause()
+	Close() bool
 	RegisterWorker(name string, worker Worker)
 	AddTask(task Task)
 	RemoveTask(task Task)
 }
 
 type standardQueue struct {
-	Q.Interface
-	queType   standardQueueType
-	bucket    *bucket
-	queueRate int32
-	workers   map[string]*workerResource
-	stop      chan bool
+	Q.Interface                            // delayed queue (priority queue)
+	queType     standardQueueType          // queutye INMEMORY or INMEORY_JOURNALING
+	bucket      *bucket                    // token bucket
+	queueRate   int32                      // rate, at wich the queue will fetch token
+	workers     map[string]*workerResource // worker pool
+	stop        chan bool                  // quit channel
 }
 
 var queue *standardQueue = nil
@@ -63,36 +70,40 @@ func GetQueue(qtype standardQueueType, maxConcurrentWorker int32, maxDequeueRate
 		}
 		queueRate := int32(math.Ceil(float64(maxDequeueRate/3)) * 2)
 		queue = &standardQueue{
-			newQueue(qtype),
-			qtype,
-			b,
-			queueRate,
-			make(map[string]*workerResource),
-			make(chan bool)}
+			Interface: newQueue(qtype),
+			queType:   qtype,
+			bucket:    b,
+			queueRate: queueRate,
+			workers:   make(map[string]*workerResource),
+		}
 	}
 	return queue, nil
 }
 
 func (q *standardQueue) Start() {
+	q.stop = make(chan bool, 1)
 	q.bucket.Fill()
-	for {
-		select {
-		case <-q.stop:
-			q.bucket.Close()
-			return
-		default:
-			n := <-q.bucket.Take(q.queueRate)
-			for i := int32(0); i < n; i++ {
-				task := q.PopTask()
-				if task.Worker != "" {
-					w, _ := q.workers[task.Worker]
-					go q.dispatch(w.Worker, task)
-				} else {
-					q.bucket.Spend()
+	go func(q *standardQueue) {
+		defer close(q.stop)
+		for {
+			select {
+			case <-q.stop:
+				q.bucket.Close()
+				return
+			default:
+				n := <-q.bucket.Take(q.queueRate)
+				for i := int32(0); i < n; i++ {
+					task := q.PopTask()
+					if task.Worker != "" {
+						w, _ := q.workers[task.Worker]
+						go q.dispatch(w.Worker, task)
+					} else {
+						q.bucket.Spend()
+					}
 				}
 			}
 		}
-	}
+	}(q)
 }
 
 func (q *standardQueue) dispatch(w Worker, task *Q.Task) {
@@ -137,10 +148,14 @@ func (q *standardQueue) done(task *Q.Task) {
 	q.CleanTask(task)
 }
 
-func (q *standardQueue) Delete() bool {
+func (q *standardQueue) Pause() {
+	q.stop <- true
+}
+
+func (q *standardQueue) Close() bool {
 	if q == queue {
-		q.Close()
-		q.bucket.Close()
+		q.stop <- true
+		q.Interface.Close()
 		queue = nil
 		return true
 	}
