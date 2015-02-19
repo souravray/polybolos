@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:52:28
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-17 01:34:56
+* @Last Modified time: 2015-02-19 19:18:06
  */
 
 package queue
@@ -10,9 +10,16 @@ package queue
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"github.com/souravray/polybolos/queue/db"
 	"github.com/souravray/polybolos/queue/heap"
+	"path"
 	"time"
+)
+
+const (
+	JOURNAL_COLLECTION     string        = "queue"
+	JOURNAL_WRITE_INTERVAL time.Duration = 1500 * time.Millisecond
 )
 
 type JournalingInmemoryQueue struct {
@@ -21,17 +28,21 @@ type JournalingInmemoryQueue struct {
 	stop chan bool
 }
 
-func NewJournalingInimemoryQueue() Interface {
-	model, _ := db.NewModel("./brue.sqlite", "queue")
+func NewJournalingInimemoryQueue(journalPath, queueName string) Interface {
+	dbPath := path.Join(journalPath, queueName)
+	model, _ := db.NewModel(dbPath, "queue")
+
 	tq := JournalingInmemoryQueue{
 		InmemoryQueue{DelayedQueue: make(DelayedQueue, 0)},
 		model,
 		make(chan bool),
 	}
 	heap.Init(&tq)
+
+	tq.DB.BatchTransaction()
+	tq.recover()
 	go func(tq *JournalingInmemoryQueue) {
-		tq.DB.BatchTransaction()
-		ticker := time.NewTicker(1500 * time.Millisecond)
+		ticker := time.NewTicker(JOURNAL_WRITE_INTERVAL)
 		for _ = range ticker.C {
 			select {
 			case <-tq.stop:
@@ -44,6 +55,30 @@ func NewJournalingInimemoryQueue() Interface {
 		}
 	}(&tq)
 	return &tq
+}
+
+func (tq *JournalingInmemoryQueue) recover() {
+	pendingTask := tq.DB.Count()
+	startTime := time.Now()
+	fmt.Println("Pending task", pendingTask)
+	limit := 1000
+	p := 0
+	for offset := 0; offset < pendingTask; offset = offset + limit {
+		results := tq.DB.Read(offset, limit)
+		for result := range results {
+			p++
+			rbuff := bytes.NewBuffer(result)
+			enc := gob.NewDecoder(rbuff)
+			task := Task{}
+			enc.Decode(&task)
+			//fmt.Println(task, "\n")
+			if task.IsEmpty() == false {
+				tq.InmemoryQueue.PushTask(&task)
+			}
+		}
+	}
+	timeTaken := time.Since(startTime)
+	fmt.Println("Final queue", tq.Len(), " in ", timeTaken)
 }
 
 func (tq *JournalingInmemoryQueue) PushTask(task *Task) {

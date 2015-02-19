@@ -2,15 +2,19 @@
 * @Author: souravray
 * @Date:   2015-02-16 00:54:54
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-17 01:42:08
+* @Last Modified time: 2015-02-19 19:35:55
  */
 
 package polybolos
 
 import (
+	"errors"
+	"fmt"
 	Q "github.com/souravray/polybolos/queue"
 	"github.com/souravray/polybolos/sys"
 	"math"
+	"os"
+	"path"
 	"time"
 )
 
@@ -19,6 +23,10 @@ type standardQueueType int
 const (
 	INMEMORY standardQueueType = iota
 	INMEMORY_JOURNALING
+)
+
+const (
+	DEFAULT_QUEUE string = "default"
 )
 
 type workerResource struct {
@@ -51,17 +59,42 @@ type standardQueue struct {
 
 var queue *standardQueue = nil
 
-func newQueue(qtype standardQueueType) (tq Q.Interface) {
+func newQueue(qtype standardQueueType, journalPath, queueName string) (tq Q.Interface) {
 	switch qtype {
 	case INMEMORY:
 		tq = Q.NewInimemoryQueue()
 	case INMEMORY_JOURNALING:
-		tq = Q.NewJournalingInimemoryQueue()
+		tq = Q.NewJournalingInimemoryQueue(journalPath, DEFAULT_QUEUE)
 	}
 	return tq
 }
 
-func GetQueue(qtype standardQueueType, maxConcurrentWorker int32, maxDequeueRate int32) (Queue, error) {
+func validatedJournalPath(journalPath string) (string, error) {
+	cleanPath := path.Clean(journalPath)
+	pathInfo, err := os.Stat(cleanPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", errors.New("Journal Path does not exist")
+		}
+		return "", err
+	}
+
+	if !pathInfo.IsDir() {
+		return "", errors.New("Journal Path is not a  directory")
+	}
+
+	return cleanPath, nil
+}
+
+func GetQueue(qtype standardQueueType, maxConcurrentWorker, maxDequeueRate int32, journalPath string) (Queue, error) {
+	var err error
+	if qtype == INMEMORY_JOURNALING {
+		journalPath, err = validatedJournalPath(journalPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if queue == nil {
 		maxConcurrentWorker = getMaxConcurrentWorker(maxConcurrentWorker)
 		b, err := newBucket(maxConcurrentWorker, maxDequeueRate)
@@ -70,14 +103,14 @@ func GetQueue(qtype standardQueueType, maxConcurrentWorker int32, maxDequeueRate
 		}
 		queueRate := int32(math.Ceil(float64(maxDequeueRate/3)) * 2)
 		queue = &standardQueue{
-			Interface: newQueue(qtype),
+			Interface: newQueue(qtype, journalPath, DEFAULT_QUEUE),
 			queType:   qtype,
 			bucket:    b,
 			queueRate: queueRate,
 			workers:   make(map[string]*workerResource),
 		}
 	}
-	return queue, nil
+	return queue, err
 }
 
 func (q *standardQueue) Start() {
@@ -95,8 +128,15 @@ func (q *standardQueue) Start() {
 				for i := int32(0); i < n; i++ {
 					task := q.PopTask()
 					if task.Worker != "" {
-						w, _ := q.workers[task.Worker]
-						go q.dispatch(w.Worker, task)
+						w, ok := q.workers[task.Worker]
+						if ok {
+							go q.dispatch(w.Worker, task)
+						} else {
+							fmt.Println("Not found worker ", task.Worker)
+							q.done(task)
+							q.bucket.Spend()
+						}
+
 					} else {
 						q.bucket.Spend()
 					}

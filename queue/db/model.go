@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-11-08 00:57:48
 * @Last Modified by:   souravray
-* @Last Modified time: 2014-11-18 00:11:05
+* @Last Modified time: 2015-02-17 03:38:21
  */
 
 package db
@@ -134,5 +134,46 @@ func (m *Model) Delete(key string) (err error) {
 	return
 }
 
-// func (m *Model) Read() chan *bytes.Buffer {
-// }
+func (m *Model) Count() int {
+	rows, err := m.DB.Query("SELECT COUNT(rowid) AS tasks FROM queue")
+
+	if err != nil {
+		return 0
+	}
+
+	for rows.Next() {
+		var tasks int
+		rows.Scan(&tasks)
+		return tasks
+	}
+	rows.Close()
+	return 0
+}
+
+func (m *Model) Read(offset, limit int) chan []byte {
+	out := make(chan []byte, limit)
+	go func(m *Model, offset, limit int, out chan []byte) {
+		defer close(out)
+		stmt, err := m.Tx.Prepare("SELECT task FROM queue ORDER BY rowid LIMIT ?,?")
+		defer stmt.Close()
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		rows, err := stmt.Query(offset, limit)
+		defer rows.Close()
+
+		if err != nil {
+			return
+		}
+
+		for rows.Next() {
+			var task []byte
+			rows.Scan(&task)
+			out <- task
+		}
+
+	}(m, offset, limit, out)
+	return out
+}
