@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-15 02:23:23
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-15 19:15:17
+* @Last Modified time: 2015-03-10 07:31:01
  */
 
 package polybolos
@@ -11,6 +11,10 @@ import (
 	"math"
 	"sync/atomic"
 	"time"
+)
+
+const (
+	MIN_PERIOD int32 = 10
 )
 
 type bucket struct {
@@ -27,8 +31,8 @@ func newBucket(capacity int32, rate int32) (b *bucket, err error) {
 	b = &bucket{capacity: capacity}
 
 	if rate > 100 {
-		b.fillSize = int32(math.Ceil(float64(rate / 10)))
-		rate = 10
+		b.fillSize = int32(math.Ceil(float64(rate / MIN_PERIOD)))
+		rate = MIN_PERIOD
 	} else {
 		b.fillSize = 1
 	}
