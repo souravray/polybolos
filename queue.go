@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2015-02-16 00:54:54
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-19 19:35:55
+* @Last Modified time: 2015-02-21 07:17:05
  */
 
 package polybolos
@@ -36,7 +36,7 @@ type workerResource struct {
 // Interface for the push Queue, the standardQueue structure implements the
 // interface. You can start dispatching task to worker by calling Start(),
 // and can pause by calling Pause(). Calling Close() will close the queue
-// and return a boolian true on success. RegisterWorker register a new worker
+// and return a boolean true on success. RegisterWorker register a new worker
 // to the worker pool. New task can be added or removed from the Queue using
 // AddTask and RemoveTask.
 type Queue interface {
@@ -154,7 +154,6 @@ func (q *standardQueue) dispatch(w Worker, task *Q.Task) {
 	} else {
 		q.done(task)
 	}
-	q.bucket.Spend()
 }
 
 func (q *standardQueue) reenqueue(w Worker, task *Q.Task) {
