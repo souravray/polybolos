@@ -2,7 +2,7 @@
 * @Author: souravray
 * @Date:   2014-10-26 20:52:28
 * @Last Modified by:   souravray
-* @Last Modified time: 2015-02-19 19:18:06
+* @Last Modified time: 2015-03-10 08:26:45
  */
 
 package queue
@@ -10,7 +10,6 @@ package queue
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"github.com/souravray/polybolos/queue/db"
 	"github.com/souravray/polybolos/queue/heap"
 	"path"
@@ -59,8 +58,6 @@ func NewJournalingInimemoryQueue(journalPath, queueName string) Interface {
 
 func (tq *JournalingInmemoryQueue) recover() {
 	pendingTask := tq.DB.Count()
-	startTime := time.Now()
-	fmt.Println("Pending task", pendingTask)
 	limit := 1000
 	p := 0
 	for offset := 0; offset < pendingTask; offset = offset + limit {
@@ -71,14 +68,11 @@ func (tq *JournalingInmemoryQueue) recover() {
 			enc := gob.NewDecoder(rbuff)
 			task := Task{}
 			enc.Decode(&task)
-			//fmt.Println(task, "\n")
 			if task.IsEmpty() == false {
 				tq.InmemoryQueue.PushTask(&task)
 			}
 		}
 	}
-	timeTaken := time.Since(startTime)
-	fmt.Println("Final queue", tq.Len(), " in ", timeTaken)
 }
 
 func (tq *JournalingInmemoryQueue) PushTask(task *Task) {
